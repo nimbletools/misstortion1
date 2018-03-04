@@ -52,7 +52,7 @@ void MisstortionAudioProcessorEditor::InitializeSlider(Slider &slider, Slider::S
 	slider.setSkewFactor(range.skew, range.symmetricSkew);
 	slider.setTextBoxStyle(Slider::NoTextBox, false, 90, 0);
 	if (suffix != "") {
-		slider.setPopupDisplayEnabled(true, true, false);
+		slider.setPopupDisplayEnabled(true, true, this);
 		slider.setTextValueSuffix(suffix);
 	}
 	slider.setValue(*param, dontSendNotification);
@@ -72,7 +72,7 @@ void MisstortionAudioProcessorEditor::InitializeSlider(Slider &slider, Slider::S
 	slider.setSkewFactor(skew);
 	slider.setTextBoxStyle(Slider::NoTextBox, false, 90, 0);
 	if (suffix != "") {
-		slider.setPopupDisplayEnabled(true, true, false);
+		slider.setPopupDisplayEnabled(true, true, this);
 		slider.setTextValueSuffix(suffix);
 	}
 	slider.setValue(*param, dontSendNotification);

@@ -3,3 +3,6 @@ Builds/
 
 # Automatically generated code
 JuceLibraryCode/
+
+# MacOS garbage
+.DS_Store
