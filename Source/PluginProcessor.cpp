@@ -177,6 +177,12 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 			float sample = channelData[i];
 
 			if (mix > 0.0f) {
+				sample = m_filtersHP[channel].processSingleSampleRaw(sample);
+
+				if (driveHard > 1.0f) {
+					sample = Clamp(-1.0f, 1.0f, sample * driveHard);
+				}
+
 				if (driveSoft > 1.0f) {
 					float driveMul = 1.0f;
 					if (sample < 0) {
@@ -185,12 +191,6 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 						driveMul = driveSoftPre + fmax(0.0f, symmetry * 2.0f - 1.0f);
 					}
 					sample = atanf(sample * driveSoft * driveMul);
-				}
-
-				sample = m_filtersHP[channel].processSingleSampleRaw(sample);
-
-				if (driveHard > 1.0f) {
-					sample = Clamp(-1.0f, 1.0f, sample * driveHard);
 				}
 
 				if (sample < 0.0f) {
