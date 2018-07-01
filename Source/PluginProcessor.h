@@ -20,11 +20,11 @@ class MisstortionAudioProcessor : public AudioProcessor
 {
 public:
 	AudioParameterFloat* m_paramMix;
-	AudioParameterFloat* m_paramGain;
+	AudioParameterFloat* m_paramGainIn;
+	AudioParameterFloat* m_paramGainOut;
 
 	AudioParameterFloat* m_paramDriveHard;
 	AudioParameterFloat* m_paramDriveSoft;
-	AudioParameterFloat* m_paramDriveSoftPre;
 	AudioParameterInt* m_paramToneHP;
 	AudioParameterInt* m_paramToneLP;
 	AudioParameterFloat* m_paramSymmetry;

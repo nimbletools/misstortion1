@@ -44,11 +44,11 @@ private:
 	Image m_backgroundImage;
 
 	Slider m_sliderMix;
-	Slider m_sliderGain;
+	Slider m_sliderGainIn;
+	Slider m_sliderGainOut;
 
 	Slider m_sliderDriveHard;
 	Slider m_sliderDriveSoft;
-	Slider m_sliderDriveSoftPre;
 	Slider m_sliderToneHP;
 	Slider m_sliderToneLP;
 	Slider m_sliderSymmetry;

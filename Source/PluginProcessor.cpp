@@ -28,11 +28,11 @@ MisstortionAudioProcessor::MisstortionAudioProcessor()
 #endif
 {
 	addParameter(m_paramMix = new AudioParameterFloat("mix", "Mix", NormalisableRange<float>(0.0f, 100.0f), 50.0f));
-	addParameter(m_paramGain = new AudioParameterFloat("gain", "Gain", NormalisableRange<float>(-50.0f, 50.0f, 0.0f, 0.5f, true), 0.0f));
+	addParameter(m_paramGainIn = new AudioParameterFloat("gainin", "Gain in", NormalisableRange<float>(-50.0f, 50.0f, 0.0f, 0.5f, true), 0.0f));
+	addParameter(m_paramGainOut = new AudioParameterFloat("gainout", "Gain out", NormalisableRange<float>(-50.0f, 50.0f, 0.0f, 0.5f, true), 0.0f));
 
 	addParameter(m_paramDriveHard = new AudioParameterFloat("drive", "Drive", NormalisableRange<float>(0.0f, 50.0f, 0.0f, 0.5f), 0.0f));
 	addParameter(m_paramDriveSoft = new AudioParameterFloat("drive2", "Drive 2", NormalisableRange<float>(0.0f, 50.0f, 0.0f, 0.5f), 0.0f));
-	addParameter(m_paramDriveSoftPre = new AudioParameterFloat("drive2pre", "Drive 2 Pre", NormalisableRange<float>(0.0f, 100.0f), 50.0f));
 	addParameter(m_paramToneHP = new AudioParameterInt("tone", "Tone", 20, 20000, 20));
 	addParameter(m_paramToneLP = new AudioParameterInt("tonepost", "Tone Post", 0, 20000, 20000));
 	addParameter(m_paramSymmetry = new AudioParameterFloat("symmetry", "Symmetry", NormalisableRange<float>(0.0f, 100.0f), 50.0f));
@@ -155,26 +155,30 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	int numSamples = buffer.getNumSamples();
 
 	float mix = (*m_paramMix / 100.0f);
-	float gain = Decibels::decibelsToGain((float)*m_paramGain, -50.0f);
+	float gainIn = Decibels::decibelsToGain((float)*m_paramGainIn, -50.0f);
+	float gainOut = Decibels::decibelsToGain((float)*m_paramGainOut, -50.0f);
 
 	float driveHard = Decibels::decibelsToGain((float)*m_paramDriveHard);
-	float driveSoft = Decibels::decibelsToGain((float)*m_paramDriveSoft);
-	float driveSoftPre = (*m_paramDriveSoftPre / 100.0f);
+	float driveSoftDb = (float)*m_paramDriveSoft;
+	float driveSoft = Decibels::decibelsToGain(driveSoftDb);
 	int toneHP = *m_paramToneHP;
 	int toneLP = *m_paramToneLP;
 	float symmetry = (*m_paramSymmetry / 100.0f);
 
-	m_filtersHP[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP));
-	m_filtersHP[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP));
+	double qo = pow(2.0, 6.0);
+	double q = sqrt(qo) / (qo - 1);
 
-	m_filtersLP[0].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP));
-	m_filtersLP[1].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP));
+	m_filtersHP[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+	m_filtersHP[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+
+	m_filtersLP[0].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
+	m_filtersLP[1].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
 
 	for (int channel = 0; channel < Min(2, totalNumInputChannels); ++channel) {
 		float* channelData = buffer.getWritePointer(channel);
 
 		for (int i = 0; i < numSamples; i++) {
-			float sample = channelData[i];
+			float sample = channelData[i] * gainIn;
 
 			if (mix > 0.0f) {
 				sample = m_filtersHP[channel].processSingleSampleRaw(sample);
@@ -184,19 +188,14 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 				}
 
 				if (driveSoft > 1.0f) {
-					float driveMul = 1.0f;
-					if (sample < 0) {
-						driveMul = driveSoftPre - fmin(0.0f, symmetry * 2.0f - 1.0f);
-					} else {
-						driveMul = driveSoftPre + fmax(0.0f, symmetry * 2.0f - 1.0f);
-					}
-					sample = atanf(sample * driveSoft * driveMul);
+					sample = atanf(sample * driveSoft);
+					sample = Clamp(-1.0f + symmetry, symmetry, sample);
 				}
 
 				if (sample < 0.0f) {
-					sample *= (1.0f - symmetry) * 2.0f;
+					sample *= (1.0f - symmetry);// *2.0f;
 				} else {
-					sample *= symmetry * 2.0f;
+					sample *= symmetry;// *2.0f;
 				}
 
 				sample = m_filtersLP[channel].processSingleSampleRaw(sample);
@@ -204,7 +203,7 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 				channelData[i] = Lerp(channelData[i], sample, mix);
 			}
 
-			channelData[i] *= gain;
+			channelData[i] *= gainOut;
 		}
 	}
 }
@@ -231,11 +230,11 @@ void MisstortionAudioProcessor::getStateInformation(MemoryBlock& destData)
 
 	XmlElement* xmlSettings = new XmlElement("settings");
 	xmlSettings->setAttribute("mix", *m_paramMix);
-	xmlSettings->setAttribute("gain", *m_paramGain);
+	xmlSettings->setAttribute("gainin", *m_paramGainIn);
+	xmlSettings->setAttribute("gainout", *m_paramGainOut);
 
 	xmlSettings->setAttribute("drive", *m_paramDriveHard);
 	xmlSettings->setAttribute("drive2", *m_paramDriveSoft);
-	xmlSettings->setAttribute("drive2pre", *m_paramDriveSoftPre);
 	xmlSettings->setAttribute("tone", *m_paramToneHP);
 	xmlSettings->setAttribute("tonepost", *m_paramToneLP);
 	xmlSettings->setAttribute("symmetry", *m_paramSymmetry);
@@ -251,24 +250,33 @@ void MisstortionAudioProcessor::setStateInformation(const void* data, int sizeIn
 	XmlElement* xmlSettings = xml->getChildByName("settings");
 	if (xmlSettings != nullptr) {
 		*m_paramMix = (float)xmlSettings->getDoubleAttribute("mix");
-		*m_paramGain = (float)xmlSettings->getDoubleAttribute("gain");
+		*m_paramGainIn = (float)xmlSettings->getDoubleAttribute("gainin");
+		*m_paramGainOut = (float)xmlSettings->getDoubleAttribute("gainout");
+
+		// From previous version, if it's set
+		double oldGainOut = xmlSettings->getDoubleAttribute("gain", -1.0f);
+		if (oldGainOut >= 0.0f) {
+			*m_paramGainIn = 0.0f;
+			*m_paramGainOut = (float)oldGainOut;
+		}
 
 		*m_paramDriveHard = (float)xmlSettings->getDoubleAttribute("drive");
 		*m_paramDriveSoft = (float)xmlSettings->getDoubleAttribute("drive2");
-		*m_paramDriveSoftPre = (float)xmlSettings->getDoubleAttribute("drive2pre");
 		*m_paramToneHP = xmlSettings->getIntAttribute("tone");
 		*m_paramToneLP = xmlSettings->getIntAttribute("tonepost");
 		*m_paramSymmetry = (float)xmlSettings->getDoubleAttribute("symmetry");
 	}
 
+#if defined(_DEBUG)
 	Logger::writeToLog(String::formatted("  Mix: %f", (float)*m_paramMix));
-	Logger::writeToLog(String::formatted("  Gain: %f", (float)*m_paramGain));
+	Logger::writeToLog(String::formatted("  Gain In: %f", (float)*m_paramGainIn));
+	Logger::writeToLog(String::formatted("  Gain Out: %f", (float)*m_paramGainOut));
 	Logger::writeToLog(String::formatted("  Drive: %f", (float)*m_paramDriveHard));
 	Logger::writeToLog(String::formatted("  Drive2: %f", (float)*m_paramDriveSoft));
-	Logger::writeToLog(String::formatted("  Drive2Pre: %f", (float)*m_paramDriveSoftPre));
 	Logger::writeToLog(String::formatted("  Tone: %f", (float)*m_paramToneHP));
 	Logger::writeToLog(String::formatted("  TonePost: %f", (float)*m_paramToneLP));
 	Logger::writeToLog(String::formatted("  Symmetry: %f", (float)*m_paramSymmetry));
+#endif
 }
 
 //==============================================================================
