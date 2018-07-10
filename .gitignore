@@ -6,3 +6,8 @@ JuceLibraryCode/
 
 # MacOS garbage
 .DS_Store
+
+# LV2 builds & related
+LV2/linux/gmake/build/.intermediate_linux
+LV2/linux/gmake/build/Misstortion.lv2
+LV2/lv2_ttl_generator

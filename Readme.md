@@ -10,6 +10,17 @@ Download prebuilt binaries [on the Itch.io page](https://nimble.itch.io/misstort
 
 It's free! It runs on Windows DAW's, both 32 bit and 64 bit, so there's no need to bridge them by hand. A version for Mac will come later.
 
+# Linux users
+
+To build the plugin as an LV2, run the following commands:
+
+```
+git submodule update --init --recursive
+./build_lv2_linux.sh
+```
+
+The plugin will be placed in the LV2/linux/gmake/build/ folder.
+
 # License
 
 Misstortion is (like the [JUCE](https://juce.com/) library) licensed under the GPL v3.
