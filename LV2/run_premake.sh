@@ -2,4 +2,4 @@
 
 cd $(dirname $0)
 
-premake5 --cc=clang --os=linux gmake
+premake5 --cc=gcc --os=linux gmake

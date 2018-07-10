@@ -11,15 +11,7 @@ endif
 .PHONY: clean prebuild prelink
 
 ifeq ($(config),debug_x32)
-  ifeq ($(origin CC), default)
-    CC = clang
-  endif
-  ifeq ($(origin CXX), default)
-    CXX = clang++
-  endif
-  ifeq ($(origin AR), default)
-    AR = ar
-  endif
+  RESCOMP = windres
   TARGETDIR = build/Misstortion.lv2
   TARGET = $(TARGETDIR)/Misstortion.so
   OBJDIR = build/.intermediate_linux/lv2_debug/x32
@@ -46,15 +38,7 @@ all: prebuild prelink $(TARGET)
 endif
 
 ifeq ($(config),debug_x64)
-  ifeq ($(origin CC), default)
-    CC = clang
-  endif
-  ifeq ($(origin CXX), default)
-    CXX = clang++
-  endif
-  ifeq ($(origin AR), default)
-    AR = ar
-  endif
+  RESCOMP = windres
   TARGETDIR = build/Misstortion.lv2
   TARGET = $(TARGETDIR)/Misstortion.so
   OBJDIR = build/.intermediate_linux/lv2_debug/x64
@@ -81,15 +65,7 @@ all: prebuild prelink $(TARGET)
 endif
 
 ifeq ($(config),release_x32)
-  ifeq ($(origin CC), default)
-    CC = clang
-  endif
-  ifeq ($(origin CXX), default)
-    CXX = clang++
-  endif
-  ifeq ($(origin AR), default)
-    AR = ar
-  endif
+  RESCOMP = windres
   TARGETDIR = build/Misstortion.lv2
   TARGET = $(TARGETDIR)/Misstortion.so
   OBJDIR = build/.intermediate_linux/lv2_release/x32
@@ -102,7 +78,7 @@ ifeq ($(config),release_x32)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += -ldl -lfreetype -lpthread -lrt -lX11 -lXext
   LDDEPS +=
-  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -shared -Wl,-soname=Misstortion.so -Wl,--no-undefined
+  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -shared -Wl,-soname=Misstortion.so -s -Wl,--no-undefined
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -116,15 +92,7 @@ all: prebuild prelink $(TARGET)
 endif
 
 ifeq ($(config),release_x64)
-  ifeq ($(origin CC), default)
-    CC = clang
-  endif
-  ifeq ($(origin CXX), default)
-    CXX = clang++
-  endif
-  ifeq ($(origin AR), default)
-    AR = ar
-  endif
+  RESCOMP = windres
   TARGETDIR = build/Misstortion.lv2
   TARGET = $(TARGETDIR)/Misstortion.so
   OBJDIR = build/.intermediate_linux/lv2_release/x64
@@ -137,7 +105,7 @@ ifeq ($(config),release_x64)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += -ldl -lfreetype -lpthread -lrt -lX11 -lXext
   LDDEPS +=
-  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -shared -Wl,-soname=Misstortion.so -Wl,--no-undefined
+  ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -shared -Wl,-soname=Misstortion.so -s -Wl,--no-undefined
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
