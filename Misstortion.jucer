@@ -91,19 +91,19 @@
         <CONFIGURATION name="Release" isDebug="0" optimisation="3" targetName="Misstortion"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
-        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
-        <MODULEPATH id="juce_graphics" path="../../juce"/>
-        <MODULEPATH id="juce_events" path="../../juce"/>
-        <MODULEPATH id="juce_data_structures" path="../../juce"/>
-        <MODULEPATH id="juce_cryptography" path="../../juce"/>
-        <MODULEPATH id="juce_core" path="../../juce"/>
-        <MODULEPATH id="juce_audio_utils" path="../../juce"/>
-        <MODULEPATH id="juce_audio_processors" path="../../juce"/>
-        <MODULEPATH id="juce_audio_plugin_client" path="../../juce"/>
-        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
-        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
-        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
+        <MODULEPATH id="juce_gui_extra" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_events" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_cryptography" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_core" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="./Libraries/DISTRHO-juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="./Libraries/DISTRHO-juce/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
   </EXPORTFORMATS>
