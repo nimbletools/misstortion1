@@ -1,0 +1,3 @@
+[submodule "Libraries/DISTRHO-juce"]
+	path = Libraries/DISTRHO-juce
+	url = https://github.com/DISTRHO/juce.git

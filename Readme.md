@@ -14,6 +14,17 @@ It's free! It runs on Windows and Mac DAW's, both 32 bit and 64 bit, so there's 
 
 [pdesaulniers](https://github.com/pdesaulniers) maintains a fork of Misstortion for [LV2](http://lv2plug.in/). You can find it here: https://github.com/pdesaulniers/misstortion
 
+# Linux users
+
+To build the plugin as an LV2, run the following commands:
+
+```
+git submodule update --init --recursive
+./build_lv2_linux.sh
+```
+
+The plugin will be placed in the LV2/linux/gmake/build/ folder.
+
 # License
 
 Misstortion is (like the [JUCE](https://juce.com/) library) licensed under the GPL v3.
