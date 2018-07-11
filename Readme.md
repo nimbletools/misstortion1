@@ -8,7 +8,11 @@ Download prebuilt binaries [on the Itch.io page](https://nimble.itch.io/misstort
 * **Soft clip**: Hyperbolic soft clip distortion.
 * **Symmetry**: Make your waveform asymmetrical for more finetuned distortion.
 
-It's free! It runs on Windows DAW's, both 32 bit and 64 bit, so there's no need to bridge them by hand. A version for Mac will come later.
+It's free! It runs on Windows and Mac DAW's, both 32 bit and 64 bit, so there's no need to bridge them by hand.
+
+# Linux (LV2)
+
+[pdesaulniers](https://github.com/pdesaulniers) maintains a fork of Misstortion for [LV2](http://lv2plug.in/). You can find it here: https://github.com/pdesaulniers/misstortion
 
 # License
 
