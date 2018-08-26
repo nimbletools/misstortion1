@@ -31,6 +31,7 @@ public:
 	void InitializeSlider(Slider &slider, Slider::SliderStyle style, AudioParameterInt* param, double skew, String suffix);
 
 	//==============================================================================
+	void paintFilterButton(ToggleButton &, Graphics &);
 	void paint(Graphics&) override;
 	void resized() override;
 
@@ -40,6 +41,7 @@ private:
 	MisstortionAudioProcessor& processor;
 
 	MisstortionLookAndFeel m_lookAndFeel;
+	TooltipWindow m_tooltip;
 
 	Image m_backgroundImage;
 
@@ -53,6 +55,10 @@ private:
 	Slider m_sliderToneLP;
 	Slider m_sliderSymmetry;
 
+	ToggleButton m_buttonFilterModeLegacy;
+	ToggleButton m_buttonFilterMode6db;
+	ToggleButton m_buttonFilterMode12db;
+
 #if DEBUG
 	Label m_labelDebug;
 #endif
@@ -61,6 +67,7 @@ private:
 	void setSliderParam(Slider* sliderChanged, Slider &actualSlider, AudioParameterFloat* param);
 	void setSliderParam(Slider* sliderChanged, Slider &actualSlider, AudioParameterInt* param);
 	void sliderValueChanged(Slider* slider) override;
+	void setFilterMode(int newMode);
 	virtual void timerCallback() override;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MisstortionAudioProcessorEditor)

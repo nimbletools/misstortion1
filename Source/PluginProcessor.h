@@ -28,6 +28,7 @@ public:
 	AudioParameterInt* m_paramToneHP;
 	AudioParameterInt* m_paramToneLP;
 	AudioParameterFloat* m_paramSymmetry;
+	AudioParameterInt* m_paramFilterMode;
 
 	IIRFilter m_filtersHP[2];
 	IIRFilter m_filtersLP[2];

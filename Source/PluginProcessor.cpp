@@ -33,9 +33,10 @@ MisstortionAudioProcessor::MisstortionAudioProcessor()
 
 	addParameter(m_paramDriveHard = new AudioParameterFloat("drive", "Drive", NormalisableRange<float>(0.0f, 50.0f, 0.0f, 0.5f), 0.0f));
 	addParameter(m_paramDriveSoft = new AudioParameterFloat("drive2", "Drive 2", NormalisableRange<float>(0.0f, 50.0f, 0.0f, 0.5f), 0.0f));
-	addParameter(m_paramToneHP = new AudioParameterInt("tone", "Tone", 20, 20000, 20));
-	addParameter(m_paramToneLP = new AudioParameterInt("tonepost", "Tone Post", 0, 20000, 20000));
+	addParameter(m_paramToneHP = new AudioParameterInt("tone", "Tone", 0, 20000, 20));
+	addParameter(m_paramToneLP = new AudioParameterInt("tonepost", "Tone Post", 1, 20000, 20000));
 	addParameter(m_paramSymmetry = new AudioParameterFloat("symmetry", "Symmetry", NormalisableRange<float>(0.0f, 100.0f), 50.0f));
+	addParameter(m_paramFilterMode = new AudioParameterInt("filtermode", "Filter Mode", 0, 2, 0));
 }
 
 MisstortionAudioProcessor::~MisstortionAudioProcessor()
@@ -165,11 +166,25 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	int toneLP = *m_paramToneLP;
 	float symmetry = (*m_paramSymmetry / 100.0f);
 
-	double qo = pow(2.0, 6.0);
-	double q = sqrt(qo) / (qo - 1);
+	double q = 1.0 / sqrt(2.0);
+	int filterMode = *m_paramFilterMode;
+	if (filterMode == 0) {
+		// Legacy (1.2 stock, very steep)
+		double qo = pow(2.0, 6.0);
+		q = sqrt(qo) / (qo - 1);
+	} else {
+		// New (1.3 filter mode)
+		double qo = 8.0; // 6 db/octave
+		if (filterMode == 2) {
+			qo = 4.0; // 12 db/octave
+		}
+		q = 1.0 / (2.0 * std::cos(3.1415926 / qo));
+	}
 
-	m_filtersHP[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
-	m_filtersHP[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+	if (toneHP > 0) {
+		m_filtersHP[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+		m_filtersHP[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+	}
 
 	m_filtersLP[0].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
 	m_filtersLP[1].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
@@ -181,7 +196,9 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 			float sample = channelData[i] * gainIn;
 
 			if (mix > 0.0f) {
-				sample = m_filtersHP[channel].processSingleSampleRaw(sample);
+				if (toneHP > 0) {
+					sample = m_filtersHP[channel].processSingleSampleRaw(sample);
+				}
 
 				if (driveHard > 1.0f) {
 					sample = Clamp(-1.0f, 1.0f, sample * driveHard);
@@ -238,6 +255,7 @@ void MisstortionAudioProcessor::getStateInformation(MemoryBlock& destData)
 	xmlSettings->setAttribute("tone", *m_paramToneHP);
 	xmlSettings->setAttribute("tonepost", *m_paramToneLP);
 	xmlSettings->setAttribute("symmetry", *m_paramSymmetry);
+	xmlSettings->setAttribute("filtermode", *m_paramFilterMode);
 	xml->addChildElement(xmlSettings);
 
 	copyXmlToBinary(*xml, destData);
@@ -265,6 +283,7 @@ void MisstortionAudioProcessor::setStateInformation(const void* data, int sizeIn
 		*m_paramToneHP = xmlSettings->getIntAttribute("tone");
 		*m_paramToneLP = xmlSettings->getIntAttribute("tonepost");
 		*m_paramSymmetry = (float)xmlSettings->getDoubleAttribute("symmetry");
+		*m_paramFilterMode = (int)xmlSettings->getIntAttribute("filtermode");
 	}
 
 #if defined(_DEBUG)
@@ -273,9 +292,10 @@ void MisstortionAudioProcessor::setStateInformation(const void* data, int sizeIn
 	Logger::writeToLog(String::formatted("  Gain Out: %f", (float)*m_paramGainOut));
 	Logger::writeToLog(String::formatted("  Drive: %f", (float)*m_paramDriveHard));
 	Logger::writeToLog(String::formatted("  Drive2: %f", (float)*m_paramDriveSoft));
-	Logger::writeToLog(String::formatted("  Tone: %f", (float)*m_paramToneHP));
-	Logger::writeToLog(String::formatted("  TonePost: %f", (float)*m_paramToneLP));
+	Logger::writeToLog(String::formatted("  Tone: %d", (int)*m_paramToneHP));
+	Logger::writeToLog(String::formatted("  TonePost: %d", (int)*m_paramToneLP));
 	Logger::writeToLog(String::formatted("  Symmetry: %f", (float)*m_paramSymmetry));
+	Logger::writeToLog(String::formatted("  Filter Mode: %d", (int)*m_paramFilterMode));
 #endif
 }
 
