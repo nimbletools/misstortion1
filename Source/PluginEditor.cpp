@@ -10,6 +10,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Utils.h"
 
 
 //==============================================================================
@@ -76,6 +77,12 @@ void MisstortionAudioProcessorEditor::InitializeSlider(Slider &slider, Slider::S
 	slider.setValue(*param, dontSendNotification);
 	slider.addListener(this);
 
+	auto baseParam = dynamic_cast<AudioProcessorParameterWithID*>(param);
+	if (baseParam != nullptr) {
+		double defaultValue = (double)range.convertFrom0to1(baseParam->getDefaultValue());
+		slider.setDoubleClickReturnValue(true, defaultValue);
+	}
+
 	slider.setLookAndFeel(&m_lookAndFeel);
 
 	addAndMakeVisible(slider);
@@ -95,6 +102,12 @@ void MisstortionAudioProcessorEditor::InitializeSlider(Slider &slider, Slider::S
 	}
 	slider.setValue(*param, dontSendNotification);
 	slider.addListener(this);
+
+	auto baseParam = dynamic_cast<AudioProcessorParameterWithID*>(param);
+	if (baseParam != nullptr) {
+		double defaultValue = Lerp((double)range.getStart(), (double)range.getEnd(), baseParam->getDefaultValue());
+		slider.setDoubleClickReturnValue(true, (int)defaultValue);
+	}
 
 	slider.setLookAndFeel(&m_lookAndFeel);
 
