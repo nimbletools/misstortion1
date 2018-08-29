@@ -30,7 +30,7 @@ public:
 	AudioParameterFloat* m_paramSymmetry;
 	AudioParameterInt* m_paramFilterMode;
 
-	IIRFilter m_filtersHP[2];
+	IIRFilter m_filtersHP[4];
 	IIRFilter m_filtersLP[2];
 
 #if DEBUG

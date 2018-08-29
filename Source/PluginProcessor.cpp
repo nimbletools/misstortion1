@@ -174,16 +174,17 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 		q = sqrt(qo) / (qo - 1);
 	} else {
 		// New (1.3 filter mode)
-		double qo = 8.0; // 6 db/octave
-		if (filterMode == 2) {
-			qo = 4.0; // 12 db/octave
-		}
-		q = 1.0 / (2.0 * std::cos(3.1415926 / qo));
+		q = 1.0 / (2.0 * std::cos(3.1415926 / 4.0));
 	}
 
 	if (toneHP > 0) {
 		m_filtersHP[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
 		m_filtersHP[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+
+		if (filterMode == 1) {
+			m_filtersHP[2].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+			m_filtersHP[3].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+		}
 	}
 
 	m_filtersLP[0].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
@@ -198,6 +199,9 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 			if (mix > 0.0f) {
 				if (toneHP > 0) {
 					sample = m_filtersHP[channel].processSingleSampleRaw(sample);
+					if (filterMode == 1) {
+						sample = m_filtersHP[channel + 2].processSingleSampleRaw(sample);
+					}
 				}
 
 				if (driveHard > 1.0f) {
