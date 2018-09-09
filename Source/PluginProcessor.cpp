@@ -187,7 +187,7 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	}
 
 	// Make a temporary buffer for the final mix
-	AudioSampleBuffer processBuffer; //TODO: We can cache this in the processor so we don't need to re-allocate the entire time
+	AudioSampleBuffer processBuffer;
 	processBuffer.makeCopyOf(buffer);
 
 	dsp::AudioBlock<float> dspBlock(processBuffer);

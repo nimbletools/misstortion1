@@ -31,8 +31,13 @@ public:
 	AudioParameterFloat* m_paramSymmetry;
 	AudioParameterInt* m_paramFilterMode;
 
-	dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filterHP;
-	dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filterLP;
+	typedef dsp::ProcessorDuplicator<
+		dsp::IIR::Filter<float>,
+		dsp::IIR::Coefficients<float>
+	> FilterType;
+
+	FilterType m_filterHP;
+	FilterType m_filterLP;
 
 	// Legacy filters (1 per channel)
 	IIRFilter m_filtersHPLegacy[2];
