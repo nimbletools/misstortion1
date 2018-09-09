@@ -108,8 +108,13 @@ void MisstortionAudioProcessor::changeProgramName(int index, const String& newNa
 //==============================================================================
 void MisstortionAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-	// Use this method as the place to do any pre-playback
-	// initialisation that you need..
+	dsp::ProcessSpec dspSpec;
+	dspSpec.sampleRate = sampleRate;
+	dspSpec.maximumBlockSize = samplesPerBlock;
+	dspSpec.numChannels = getTotalNumOutputChannels();
+
+	m_filterHP.prepare(dspSpec);
+	m_filterLP.prepare(dspSpec);
 }
 
 void MisstortionAudioProcessor::releaseResources()
@@ -166,67 +171,96 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	int toneLP = *m_paramToneLP;
 	float symmetry = (*m_paramSymmetry / 100.0f);
 
-	double q = 1.0 / sqrt(2.0);
 	int filterMode = *m_paramFilterMode;
 	if (filterMode == 0) {
 		// Legacy (1.2 stock, very steep)
 		double qo = pow(2.0, 6.0);
-		q = sqrt(qo) / (qo - 1);
-	} else {
-		// New (1.3 filter mode)
-		q = 1.0 / (2.0 * std::cos(3.1415926 / 4.0));
-	}
+		double q = sqrt(qo) / (qo - 1);
 
-	if (toneHP > 0) {
-		m_filtersHP[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
-		m_filtersHP[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
-
-		if (filterMode == 1) {
-			m_filtersHP[2].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
-			m_filtersHP[3].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+		if (toneHP > 0) {
+			m_filtersHPLegacy[0].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
+			m_filtersHPLegacy[1].setCoefficients(IIRCoefficients::makeHighPass(sampleRate, (double)toneHP, q));
 		}
+
+		m_filtersLPLegacy[0].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
+		m_filtersLPLegacy[1].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
 	}
 
-	m_filtersLP[0].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
-	m_filtersLP[1].setCoefficients(IIRCoefficients::makeLowPass(sampleRate, (double)toneLP, q));
+	// Make a temporary buffer for the final mix
+	AudioSampleBuffer processBuffer; //TODO: We can cache this in the processor so we don't need to re-allocate the entire time
+	processBuffer.makeCopyOf(buffer);
 
+	dsp::AudioBlock<float> dspBlock(processBuffer);
+	dsp::ProcessContextReplacing<float> dspContext(dspBlock);
+
+	// Apply input gain
+	processBuffer.applyGain(gainIn);
+
+	// Apply tone filter (6db/oct or 12db/oct high pass filter)
+	if (filterMode != 0 && toneHP > 0) {
+		// filterMode as order means 1st order = 6db/oct, 2nd order = 12db/oct
+		auto coeff = dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod((float)toneHP, sampleRate, filterMode);
+		m_filterHP.state->coefficients = coeff[0].coefficients;
+		m_filterHP.process(dspContext);
+	}
+
+	//TODO: Turn this into a DSP processor?
 	for (int channel = 0; channel < Min(2, totalNumInputChannels); ++channel) {
-		float* channelData = buffer.getWritePointer(channel);
+		float* channelData = processBuffer.getWritePointer(channel);
 
 		for (int i = 0; i < numSamples; i++) {
-			float sample = channelData[i] * gainIn;
+			float &sample = channelData[i];
 
-			if (mix > 0.0f) {
-				if (toneHP > 0) {
-					sample = m_filtersHP[channel].processSingleSampleRaw(sample);
-					if (filterMode == 1) {
-						sample = m_filtersHP[channel + 2].processSingleSampleRaw(sample);
-					}
-				}
-
-				if (driveHard > 1.0f) {
-					sample = Clamp(-1.0f, 1.0f, sample * driveHard);
-				}
-
-				if (driveSoft > 1.0f) {
-					sample = atanf(sample * driveSoft);
-					sample = Clamp(-1.0f + symmetry, symmetry, sample);
-				}
-
-				if (sample < 0.0f) {
-					sample *= (1.0f - symmetry);// *2.0f;
-				} else {
-					sample *= symmetry;// *2.0f;
-				}
-
-				sample = m_filtersLP[channel].processSingleSampleRaw(sample);
-
-				channelData[i] = Lerp(channelData[i], sample, mix);
+			// Legacy tone filter (from 1.2, weird Q value on a 2nd order filter)
+			if (filterMode == 0 && toneHP > 0) {
+				sample = m_filtersHPLegacy[channel].processSingleSampleRaw(sample);
 			}
 
-			channelData[i] *= gainOut;
+			// Hard clip distortion
+			if (driveHard > 1.0f) {
+				sample = Clamp(-1.0f, 1.0f, sample * driveHard);
+			}
+
+			// Hyperbolic soft clip distortion
+			if (driveSoft > 1.0f) {
+				sample = atanf(sample * driveSoft);
+				sample = Clamp(-1.0f + symmetry, symmetry, sample);
+			}
+
+			// Apply symmetry
+			if (sample < 0.0f) {
+				sample *= (1.0f - symmetry);
+			} else {
+				sample *= symmetry;
+			}
+
+			// Legacy clip filter (from 1.2, weird Q value on a 2nd order filter)
+			if (filterMode == 0) {
+				sample = m_filtersLPLegacy[channel].processSingleSampleRaw(sample);
+			}
 		}
 	}
+
+	// Apply clip filter (6db/oct or 12db/oct low pass filter)
+	if (filterMode != 0) {
+		// filterMode as order means 1st order = 6db/oct, 2nd order = 12db/oct
+		auto coeff = dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod((float)toneLP, sampleRate, filterMode);
+		m_filterLP.state->coefficients = coeff[0].coefficients;
+		m_filterLP.process(dspContext);
+	}
+
+	// Apply mix from the buffer
+	for (int channel = 0; channel < Min(2, totalNumInputChannels); ++channel) {
+		float* channelData = buffer.getWritePointer(channel);
+		const float* processedData = processBuffer.getReadPointer(channel);
+
+		for (int i = 0; i < numSamples; i++) {
+			channelData[i] = Lerp(channelData[i], processedData[i], mix);
+		}
+	}
+
+	// And finally, apply output gain
+	buffer.applyGain(gainOut);
 }
 
 //==============================================================================
