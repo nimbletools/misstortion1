@@ -277,7 +277,7 @@ AudioProcessorEditor* MisstortionAudioProcessor::createEditor()
 //==============================================================================
 void MisstortionAudioProcessor::getStateInformation(MemoryBlock& destData)
 {
-	ScopedPointer<XmlElement> xml = new XmlElement("root");
+	auto xml = std::make_unique<XmlElement>("root");
 
 	XmlElement* xmlVersion = new XmlElement("version");
 	xmlVersion->addTextElement(JucePlugin_VersionString);
@@ -301,7 +301,7 @@ void MisstortionAudioProcessor::getStateInformation(MemoryBlock& destData)
 
 void MisstortionAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-	ScopedPointer<XmlElement> xml = getXmlFromBinary(data, sizeInBytes);
+	std::unique_ptr<XmlElement> xml = getXmlFromBinary(data, sizeInBytes);
 
 	XmlElement* xmlSettings = xml->getChildByName("settings");
 	if (xmlSettings != nullptr) {
