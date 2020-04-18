@@ -200,7 +200,7 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	if (filterMode != 0 && toneHP > 0) {
 		// filterMode as order means 1st order = 6db/oct, 2nd order = 12db/oct
 		auto coeff = dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod((float)toneHP, sampleRate, filterMode);
-		m_filterHP.state->coefficients = coeff[0].coefficients;
+		m_filterHP.state->coefficients = coeff[0]->coefficients;
 		m_filterHP.process(dspContext);
 	}
 
@@ -245,7 +245,7 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	if (filterMode != 0) {
 		// filterMode as order means 1st order = 6db/oct, 2nd order = 12db/oct
 		auto coeff = dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod((float)toneLP, sampleRate, filterMode);
-		m_filterLP.state->coefficients = coeff[0].coefficients;
+		m_filterLP.state->coefficients = coeff[0]->coefficients;
 		m_filterLP.process(dspContext);
 	}
 
