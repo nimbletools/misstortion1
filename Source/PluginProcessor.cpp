@@ -200,7 +200,7 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	if (filterMode != 0 && toneHP > 0) {
 		// filterMode as order means 1st order = 6db/oct, 2nd order = 12db/oct
 		auto coeff = dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod((float)toneHP, sampleRate, filterMode);
-		m_filterHP.state->coefficients = coeff[0].coefficients;
+		m_filterHP.state->coefficients = coeff[0]->coefficients;
 		m_filterHP.process(dspContext);
 	}
 
@@ -245,7 +245,7 @@ void MisstortionAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuff
 	if (filterMode != 0) {
 		// filterMode as order means 1st order = 6db/oct, 2nd order = 12db/oct
 		auto coeff = dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod((float)toneLP, sampleRate, filterMode);
-		m_filterLP.state->coefficients = coeff[0].coefficients;
+		m_filterLP.state->coefficients = coeff[0]->coefficients;
 		m_filterLP.process(dspContext);
 	}
 
@@ -277,7 +277,7 @@ AudioProcessorEditor* MisstortionAudioProcessor::createEditor()
 //==============================================================================
 void MisstortionAudioProcessor::getStateInformation(MemoryBlock& destData)
 {
-	ScopedPointer<XmlElement> xml = new XmlElement("root");
+	auto xml = std::make_unique<XmlElement>("root");
 
 	XmlElement* xmlVersion = new XmlElement("version");
 	xmlVersion->addTextElement(JucePlugin_VersionString);
@@ -301,7 +301,7 @@ void MisstortionAudioProcessor::getStateInformation(MemoryBlock& destData)
 
 void MisstortionAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-	ScopedPointer<XmlElement> xml = getXmlFromBinary(data, sizeInBytes);
+	std::unique_ptr<XmlElement> xml = getXmlFromBinary(data, sizeInBytes);
 
 	XmlElement* xmlSettings = xml->getChildByName("settings");
 	if (xmlSettings != nullptr) {
